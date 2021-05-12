@@ -6,7 +6,7 @@
 
 ## Diagrams below show its features as a text editor
 
-![Text Editor](TextEditor.jpg)
+![Text Editor](textEditor.jpg)
 
 ## File Menu
 
