@@ -8,10 +8,8 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -57,11 +55,13 @@ public final class SettingMenu extends AbstractMenu {
             final Stage stage = new Stage();
             stage.setTitle("Color Picker");
 
-            final Region region = (Region)this.getTextArea().lookup(".content");
-
             final BorderPane box = new BorderPane();
             final ColorPicker colorPicker = new ColorPicker();
-            colorPicker.setOnAction(a -> region.setBackground(new Background(new BackgroundFill(colorPicker.getValue(), null, null))));
+            colorPicker.setOnAction(a -> {
+                final String format = format(colorPicker.getValue());
+                this.getTextArea().lookup(".content").setStyle("-fx-background-color:" + format + " !important;");
+                this.getTextArea().setStyle("-fx-background-color:" + format + " !important;");
+            });
             box.setCenter(colorPicker);
 
             final Button okButton = new Button("Ok");
@@ -78,14 +78,18 @@ public final class SettingMenu extends AbstractMenu {
         });
     }
 
+    private String format(final Color c) {
+        return String.format("#%02x%02x%02x", (int) (255 * c.getRed()), (int) (255 * c.getGreen()), (int) (255 * c.getBlue()));
+    }
+
     private MenuItem zoomOut() {
-        final MenuItem zoomOut = new MenuItem("Decrease Font Size (" + KEYBOARD_KEY.INCREASE_FONT + ")");
+        final MenuItem zoomOut = new MenuItem("Decrease Font Size (" + KEYBOARD_KEY.DECREASE_FONT + ")");
         zoomOut.setOnAction(e -> getTextArea().decreaseFontSize());
         return zoomOut;
     }
 
     private MenuItem zoomIn() {
-        final MenuItem zoomIn = new MenuItem("Increase Font Size (" + KEYBOARD_KEY.DECREASE_FONT + ")");
+        final MenuItem zoomIn = new MenuItem("Increase Font Size (" + KEYBOARD_KEY.INCREASE_FONT + ")");
         zoomIn.setOnAction(e -> getTextArea().increaseFontSize());
         return zoomIn;
     }

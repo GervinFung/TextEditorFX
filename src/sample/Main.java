@@ -20,10 +20,6 @@ public final class Main extends Application {
     public void start(final Stage primaryStage) {
         final PositionCaret positionCaret = new PositionCaret();
         final TextEditorArea textEditorArea = new TextEditorArea(primaryStage, positionCaret);
-        primaryStage.setOnCloseRequest(e -> {
-            textEditorArea.quitApplication();
-            e.consume();
-        });
         createNewWindow(primaryStage, textEditorArea, positionCaret);
     }
 
@@ -35,6 +31,11 @@ public final class Main extends Application {
         borderPane.setTop(menuBar);
         borderPane.setCenter(textArea);
         borderPane.setBottom(positionCaret);
+
+        primaryStage.setOnCloseRequest(e -> {
+            textArea.quitApplication();
+            e.consume();
+        });
 
         if (primaryStage.getTitle() == null) {
             primaryStage.setTitle("FX Text Editor");

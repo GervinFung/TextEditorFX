@@ -201,18 +201,15 @@ public final class TextEditorArea extends TextArea {
     }
 
     public void undoText() {
-        if (!this.checkStringNullOrEmpty()) { this.undo(); }
+        this.undo();
     }
 
     public void redoText() {
-        if (!this.checkStringNullOrEmpty()) { this.redo(); }
+        this.redo();
     }
 
     public void deleteSelectedText() {
-        if (!this.checkStringNullOrEmpty()) {
-            final int caretPos = this.getCaretPosition();
-            this.deleteText(caretPos - this.getSelectedText().length(), caretPos);
-        }
+        if (!this.checkStringNullOrEmpty()) { this.deleteText(this.getSelection()); }
     }
 
     public void createNewFile() {
@@ -371,23 +368,25 @@ public final class TextEditorArea extends TextArea {
     public void goToLine() {
         final List<String> texts = this.separateByNewLine();
         final int maxLength = texts.size();
+        final String contentMsg;
+        if (maxLength == 0) {
+            contentMsg = "There are no line available";
+            this.displayDialog(contentMsg, "No Line Available");
+            return;
+        } else {
+            contentMsg =  "Please enter " + (maxLength == 1 ? "1 only" : "from 1 to " + maxLength + " only");
+        }
         final TextInputDialog textInputDialog = new TextInputDialog();
-        textInputDialog.setContentText("Which Line Do You Want To Go To?");
         textInputDialog.initModality(Modality.WINDOW_MODAL);
         textInputDialog.initOwner(this.stage);
-        final String errorMessage;
-        if (maxLength == 0) {
-            errorMessage = "There are no line available";
-        } else {
-            errorMessage =  "Please enter " + (maxLength == 1 ? "1 only" : "from 1 to " + maxLength + " only");
-        }
+        textInputDialog.setContentText(contentMsg);
         final Map<Integer, Integer> lineOffset = this.getLines(texts, maxLength);
         textInputDialog.showAndWait().ifPresentOrElse(result -> {
             if (tryParseIntInRange(result, maxLength)) {
                 this.positionCaret(lineOffset.get(Integer.parseInt(result)));
                 textInputDialog.close();
             } else {
-                this.displayDialog(errorMessage, "Input Error");
+                this.displayDialog(contentMsg, "Input Error");
             }
         }, textInputDialog::close);
     }

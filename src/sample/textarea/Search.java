@@ -112,9 +112,10 @@ public final class Search extends Stage {
     private void replaceWord() {
         final String searchText = this.wordToSearch.getText();
         final String textAreaText = this.textEditorArea.getText();
-        final int index = textAreaText.indexOf(searchText, this.textEditorArea.getCaretPosition());
+        final int searchLength = searchText.length();
+        final int index = textAreaText.indexOf(searchText, this.textEditorArea.getCaretPosition() - searchLength);
         if (index >= 0) {
-            this.textEditorArea.replaceText(index, index + searchText.length(), textAreaText);
+            this.textEditorArea.replaceText(index, index + searchLength, this.replaceWord.getText());
         }
     }
 }
