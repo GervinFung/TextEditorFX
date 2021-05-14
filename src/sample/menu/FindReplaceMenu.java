@@ -7,7 +7,7 @@ import sample.textarea.TextEditorArea;
 public final class FindReplaceMenu extends AbstractMenu {
 
     public FindReplaceMenu(final TextEditorArea textArea) {
-        super(textArea,"File or Replace");
+        super(textArea,"Find or Replace");
         this.getItems().addAll(
                 this.find(),
                 this.findPrevious(),
