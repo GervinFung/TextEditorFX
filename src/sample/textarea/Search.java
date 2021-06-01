@@ -19,7 +19,15 @@ public final class Search extends Stage {
     private final TextField wordToSearch, replaceWord;
 
     public static void startSearch(final TextEditorArea textEditorArea) {
-        Platform.runLater(() -> new Search(textEditorArea));
+        Platform.runLater(() -> {
+            if (textEditorArea.getSearch() == null) {
+                textEditorArea.updateSearchDialog(new Search(textEditorArea));
+            } else if (textEditorArea.getSearch().isIconified()) {
+                textEditorArea.getSearch().setIconified(false);
+            } else {
+                textEditorArea.getSearch().toFront();
+            }
+        });
     }
 
     private Search(final TextEditorArea textEditorArea) {
@@ -39,6 +47,8 @@ public final class Search extends Stage {
         this.setScene(new Scene(borderPane));
         this.initModality(Modality.WINDOW_MODAL);
         this.show();
+
+        this.setOnCloseRequest(e -> this.textEditorArea.updateSearchDialog(null));
     }
 
     private Pane createTopPane() {
@@ -62,20 +72,36 @@ public final class Search extends Stage {
 
         final Button previousButton = new PaneButton("Search Previous");
         previousButton.setOnAction(e -> {
-            final String searchText = this.wordToSearch.getText();
-            final int length = searchText.length();
-            final int index = this.textEditorArea.getText().lastIndexOf(searchText, this.textEditorArea.getCaretPosition() - length - 1);
+            final int index = this.findPreviousWordIndex();
             if (index >= 0) {
-                this.textEditorArea.selectRange(index, index + length);
+                this.findWord(index);
+            } else {
+                final int caretPos = this.textEditorArea.getCaretPosition();
+                this.textEditorArea.setCaretPostAtEnd();
+                final int anotherIndex = this.findPreviousWordIndex();
+                if (anotherIndex >= 0) {
+                    this.findWord(anotherIndex);
+                } else {
+                    this.textEditorArea.positionCaret(caretPos);
+                    this.textEditorArea.displayDialog("No such keyword", "Warning");
+                }
             }
         });
         final Button nextButton = new PaneButton("Search Next");
         nextButton.setOnAction(e -> {
-            final String searchText = this.wordToSearch.getText();
-            final int length = searchText.length();
-            final int index = this.textEditorArea.getText().indexOf(searchText, this.textEditorArea.getCaretPosition());
+            final int index = this.findNextWordIndex();
             if (index >= 0) {
-                this.textEditorArea.selectRange(index, index + length);
+                this.findWord(index);
+            } else {
+                final int caretPos = this.textEditorArea.getCaretPosition();
+                this.textEditorArea.setCarePostAtBegin();
+                final int anotherIndex = this.findNextWordIndex();
+                if (anotherIndex >= 0) {
+                    this.findWord(anotherIndex);
+                } else {
+                    this.textEditorArea.positionCaret(caretPos);
+                    this.textEditorArea.displayDialog("No such keyword", "Warning");
+                }
             }
         });
         gridPane.addRow(0, previousButton, nextButton);
@@ -88,6 +114,23 @@ public final class Search extends Stage {
         gridPane.addRow(1, replace, replaceAll);
 
         return gridPane;
+    }
+
+    private int findPreviousWordIndex() {
+        final String searchText = this.wordToSearch.getText();
+        return this.textEditorArea.getText().lastIndexOf(searchText, this.textEditorArea.getCaretPosition() - searchText.length() - 1);
+    }
+
+    private int findNextWordIndex() {
+        final String searchText = this.wordToSearch.getText();
+        return this.textEditorArea.getText().indexOf(searchText, this.textEditorArea.getCaretPosition());
+    }
+
+    private void findWord(final int index) {
+        if (index == -1) {
+            throw new IllegalArgumentException("Index cannot be less than 0");
+        }
+        this.textEditorArea.selectRange(index, index + this.wordToSearch.getText().length());
     }
 
     private void replaceAllWord() {

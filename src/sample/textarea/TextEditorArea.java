@@ -13,6 +13,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -44,6 +45,7 @@ public final class TextEditorArea extends TextArea {
     private final static Clipboard CLIPBOARD = Clipboard.getSystemClipboard();
     private final Stage stage;
     private String currentFilePath, currentContent;
+    private Search search;
 
     public TextEditorArea(final Stage stage, final PositionCaret positionCaret) {
         this(stage, positionCaret, null, "");
@@ -53,25 +55,35 @@ public final class TextEditorArea extends TextArea {
         this.stage = stage;
         this.currentFilePath = currentFilePath;
         this.currentContent = currentContent;
+        this.search = null;
         this.setText(this.currentContent);
         this.setWrapText(true);
         this.getCombinationOfKeys();
         this.setBorder(Border.EMPTY);
         this.getStylesheets().add(this.getCSSFile());
         this.positionObserve(positionCaret);
+        this.setFont(Font.font("Consolas", FontPosture.REGULAR, 12));
     }
+
+    public void updateSearchDialog(final Search search) { this.search = search; }
+
+    public Search getSearch() { return this.search; }
 
     private void positionObserve(final PositionCaret positionCaret) {
         this.caretPositionProperty().addListener((observableValue, oldVal, newVal) -> {
-            try {
-                final int caretPos = this.getCaretPosition();
-                final List<String> contents = this.separateByNewLine();
-                final int maxLength = contents.size();
-                final Map<Integer, Integer> lineOffset = this.observeLineOffset(contents, maxLength);
-                final int row = getLineNumber(lineOffset, caretPos), column = caretPos - lineOffset.get(row) + contents.get(row - 1).length();
-                positionCaret.updatePosition(row, column);
-            } catch (final NullPointerException e) {
+            final int caretPos = this.getCaretPosition();
+            final List<String> contents = this.separateByNewLine();
+            final int maxLength = contents.size();
+            if (maxLength == 0) {
                 positionCaret.updatePosition(1, 1);
+            } else {
+                final Map<Integer, Integer> lineOffset = observeLineOffset(contents, maxLength);
+                final int row = getLineNumber(lineOffset, caretPos), column = caretPos - lineOffset.get(row) + contents.get(row - 1).length();
+                if (row == 1) {
+                    positionCaret.updatePosition(row, column + 1);
+                } else {
+                    positionCaret.updatePosition(row, column);
+                }
             }
         });
     }
@@ -108,10 +120,10 @@ public final class TextEditorArea extends TextArea {
                 return entry.getKey();
             }
         }
-        return 0;
+        throw new IllegalArgumentException("lineOffSet do not have the key");
     }
 
-    private Map<Integer, Integer> observeLineOffset(final List<String> contents, final int maxLength) {
+    private static Map<Integer, Integer> observeLineOffset(final List<String> contents, final int maxLength) {
         final Map<Integer, Integer> lineOffset = new HashMap<>();
         int cumulativeLength = 0;
         for (int i = 0; i < maxLength; i++) {
@@ -334,7 +346,10 @@ public final class TextEditorArea extends TextArea {
             final Alert alert = this.createAlertDialog("Quit Application", "Do you want to quit application?");
             alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
             alert.showAndWait().ifPresent(type -> {
-                if (type == ButtonType.YES) { this.stage.close();}
+                if (type == ButtonType.YES) {
+                    if (this.search != null) { this.search.close(); }
+                    this.stage.close();
+                }
             });
             return;
         }
@@ -401,6 +416,12 @@ public final class TextEditorArea extends TextArea {
         return Collections.unmodifiableMap(lineOffset);
     }
 
+    public void setCaretPostAtEnd() {
+        this.positionCaret(this.getText().length());
+    }
+
+    public void setCarePostAtBegin() { this.positionCaret(0); }
+
     private static boolean tryParseIntInRange(final String data, final int max) {
         try {
             final int temp = Integer.parseInt(data);
@@ -419,7 +440,7 @@ public final class TextEditorArea extends TextArea {
         this.displayDialog(e.getMessage(), "Error");
     }
 
-    private void displayDialog(final String message, final String title) {
+    public void displayDialog(final String message, final String title) {
         final Dialog<String> dialog = new Dialog<>();
         dialog.initModality(Modality.WINDOW_MODAL);
         dialog.initOwner(this.stage);

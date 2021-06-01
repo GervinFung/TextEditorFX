@@ -1,4 +1,4 @@
-## This is basic Notepad of mine, written in JavaFX to enhance the feel and look of the previous NotePad
+## This is basic Notepad of mine, written in JavaFX as an upgraded version of the previous TextEditor written in Swing
 
 #### It is Notepad, You can change the font size, cut, copy, paste and do all activities that a normal NotePad can do
 
